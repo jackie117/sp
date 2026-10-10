@@ -1,10 +1,10 @@
-name: python_ci
-run-name: "Python CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
+name: si_ts_ci
+run-name: "TS CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:
         types:
-            - python_ci
+            - si_ts_ci
     workflow_dispatch:
         inputs:
             target_ref:
@@ -28,20 +28,14 @@ permissions:
     contents: read
 
 concurrency:
-    group: python-ci
+    group: ts-ci
     cancel-in-progress: true
 
 jobs:
-    python_quality:
-        name: python_quality
+    ts_quality:
+        name: ts_quality
         runs-on: windows-latest
-        timeout-minutes: 45
-        env:
-            # 子进程会打印非 ASCII 断言文案；runner 默认代码页（charmap）下子进程会
-            # UnicodeEncodeError。测试侧按 encoding="utf-8" 读取子进程输出，统一让
-            # 子进程以 UTF-8 写 stdio
-            PYTHONUTF8: "1"
-            PYTHONIOENCODING: utf-8
+        timeout-minutes: 30
         steps:
             - name: resolve_target_ref
               id: target_ref
@@ -93,28 +87,27 @@ jobs:
                   rm -f "${key_file}"
                   echo "checkout ok"
 
-            - name: setup_python
-              uses: actions/setup-python@v7
-              with:
-                  python-version: "3.14"
-
             - name: setup_node
               uses: actions/setup-node@v7
               with:
                   node-version: 24
 
-            - name: install_pytest
-              # setuptools 供部分用例进程内 import（Distribution/setup）
+            - name: install_dependencies
               shell: bash
-              working-directory: target
-              run: python -m pip install --disable-pip-version-check pytest setuptools
+              working-directory: target/source/system_engine
+              run: npm ci
 
-            - name: python_quality
-              # TEMP 指到无 8.3 别名的工作区临时目录，避免与路径归一化错位
-              # （runner 上下文只在步骤级 env 可用，不能放 job 级）
+            - name: typecheck
               shell: bash
-              working-directory: target
-              env:
-                  TEMP: ${{ runner.temp }}
-                  TMP: ${{ runner.temp }}
-              run: python -m pytest -q
+              working-directory: target/source/system_engine
+              run: npm run typecheck
+
+            - name: build
+              shell: bash
+              working-directory: target/source/system_engine
+              run: npm run build
+
+            - name: ts_quality
+              shell: bash
+              working-directory: target/source/system_engine
+              run: npm test

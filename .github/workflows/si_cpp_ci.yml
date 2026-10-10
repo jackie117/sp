@@ -1,10 +1,10 @@
-name: ts_ci
-run-name: "TS CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
+name: si_cpp_ci
+run-name: "C++ CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:
         types:
-            - ts_ci
+            - si_cpp_ci
     workflow_dispatch:
         inputs:
             target_ref:
@@ -28,12 +28,12 @@ permissions:
     contents: read
 
 concurrency:
-    group: ts-ci
+    group: cpp-ci
     cancel-in-progress: true
 
 jobs:
-    ts_quality:
-        name: ts_quality
+    cpp_quality:
+        name: cpp_quality
         runs-on: windows-latest
         timeout-minutes: 30
         steps:
@@ -87,27 +87,16 @@ jobs:
                   rm -f "${key_file}"
                   echo "checkout ok"
 
-            - name: setup_node
-              uses: actions/setup-node@v7
-              with:
-                  node-version: 24
-
-            - name: install_dependencies
+            - name: configure
               shell: bash
-              working-directory: target/source/system_engine
-              run: npm ci
+              run: cmake -S target/source/local_pr_console -B build -A x64
 
-            - name: typecheck
+            - name: build_tests_target
+              # 只构建测试目标：ALL 目标含 app 的 icacls POST_BUILD（写 SACL），
+              # 在受特权限制的环境必失败；CTest 只需要测试目标
               shell: bash
-              working-directory: target/source/system_engine
-              run: npm run typecheck
+              run: cmake --build build --config Debug --target local_pr_console_tests
 
-            - name: build
+            - name: cpp_quality
               shell: bash
-              working-directory: target/source/system_engine
-              run: npm run build
-
-            - name: ts_quality
-              shell: bash
-              working-directory: target/source/system_engine
-              run: npm test
+              run: ctest --test-dir build -C Debug --output-on-failure

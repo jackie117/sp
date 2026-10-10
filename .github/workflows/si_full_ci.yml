@@ -1,10 +1,10 @@
-name: full_ci
+name: si_full_ci
 run-name: "Full CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:
         types:
-            - full_ci
+            - si_full_ci
     workflow_dispatch:
         inputs:
             target_ref:
@@ -44,21 +44,21 @@ jobs:
 
     python_ci:
         needs: prepare
-        uses: ./.github/workflows/python_ci.yml
+        uses: ./.github/workflows/si_python_ci.yml
         with:
             target_ref: ${{ needs.prepare.outputs.target_ref }}
         secrets: inherit
 
     ts_ci:
         needs: prepare
-        uses: ./.github/workflows/ts_ci.yml
+        uses: ./.github/workflows/si_ts_ci.yml
         with:
             target_ref: ${{ needs.prepare.outputs.target_ref }}
         secrets: inherit
 
     cpp_ci:
         needs: prepare
-        uses: ./.github/workflows/cpp_ci.yml
+        uses: ./.github/workflows/si_cpp_ci.yml
         with:
             target_ref: ${{ needs.prepare.outputs.target_ref }}
         secrets: inherit

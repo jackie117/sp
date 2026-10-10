@@ -1,10 +1,10 @@
-name: cpp_ci
-run-name: "C++ CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
+name: si_python_ci
+run-name: "Python CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:
         types:
-            - cpp_ci
+            - si_python_ci
     workflow_dispatch:
         inputs:
             target_ref:
@@ -28,14 +28,20 @@ permissions:
     contents: read
 
 concurrency:
-    group: cpp-ci
+    group: python-ci
     cancel-in-progress: true
 
 jobs:
-    cpp_quality:
-        name: cpp_quality
+    python_quality:
+        name: python_quality
         runs-on: windows-latest
-        timeout-minutes: 30
+        timeout-minutes: 45
+        env:
+            # 子进程会打印非 ASCII 断言文案；runner 默认代码页（charmap）下子进程会
+            # UnicodeEncodeError。测试侧按 encoding="utf-8" 读取子进程输出，统一让
+            # 子进程以 UTF-8 写 stdio
+            PYTHONUTF8: "1"
+            PYTHONIOENCODING: utf-8
         steps:
             - name: resolve_target_ref
               id: target_ref
@@ -87,16 +93,28 @@ jobs:
                   rm -f "${key_file}"
                   echo "checkout ok"
 
-            - name: configure
-              shell: bash
-              run: cmake -S target/source/local_pr_console -B build -A x64
+            - name: setup_python
+              uses: actions/setup-python@v7
+              with:
+                  python-version: "3.14"
 
-            - name: build_tests_target
-              # 只构建测试目标：ALL 目标含 app 的 icacls POST_BUILD（写 SACL），
-              # 在受特权限制的环境必失败；CTest 只需要测试目标
-              shell: bash
-              run: cmake --build build --config Debug --target local_pr_console_tests
+            - name: setup_node
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24
 
-            - name: cpp_quality
+            - name: install_pytest
+              # setuptools 供部分用例进程内 import（Distribution/setup）
               shell: bash
-              run: ctest --test-dir build -C Debug --output-on-failure
+              working-directory: target
+              run: python -m pip install --disable-pip-version-check pytest setuptools
+
+            - name: python_quality
+              # TEMP 指到无 8.3 别名的工作区临时目录，避免与路径归一化错位
+              # （runner 上下文只在步骤级 env 可用，不能放 job 级）
+              shell: bash
+              working-directory: target
+              env:
+                  TEMP: ${{ runner.temp }}
+                  TMP: ${{ runner.temp }}
+              run: python -m pytest -q
