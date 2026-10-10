@@ -1,5 +1,5 @@
 name: cpp_ci
-run-name: "C++ CI #${{ github.run_number }}"
+run-name: "C++ CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:

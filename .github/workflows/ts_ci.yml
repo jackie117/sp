@@ -1,5 +1,5 @@
 name: ts_ci
-run-name: "TS CI #${{ github.run_number }}"
+run-name: "TS CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:

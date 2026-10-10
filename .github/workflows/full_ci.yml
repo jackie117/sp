@@ -1,5 +1,5 @@
 name: full_ci
-run-name: "Full CI #${{ github.run_number }}"
+run-name: "Full CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:

@@ -1,5 +1,5 @@
 name: python_ci
-run-name: "Python CI #${{ github.run_number }}"
+run-name: "Python CI · ${{ github.event.client_payload.target_source || inputs.target_ref }}"
 
 on:
     repository_dispatch:
