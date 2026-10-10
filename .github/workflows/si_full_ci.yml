@@ -5,6 +5,9 @@ on:
     repository_dispatch:
         types:
             - si_full_ci
+            # 兼容别名：私有仓 main 上的触发器还在发旧事件名 full_ci，
+            # 私有仓合入 si_full_ci 对齐后可移除
+            - full_ci
     workflow_dispatch:
         inputs:
             target_ref:
