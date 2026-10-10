@@ -72,7 +72,9 @@ jobs:
                       exit 1
                   fi
 
-                  key_file="${RUNNER_TEMP}/checkout_key"
+                  # RUNNER_TEMP 在 Windows 是反斜杠路径；GIT_SSH_COMMAND 经 sh -c 执行时
+                  # 反斜杠会被当转义符吞掉，统一转正斜杠（git 自带 ssh 与 Windows ssh 都兼容）
+                  key_file="${RUNNER_TEMP//\\//}/checkout_key"
                   printf '%s\n' "${CHECKOUT_DEPLOY_KEY}" > "${key_file}"
                   chmod 600 "${key_file}"
                   export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
