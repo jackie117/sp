@@ -62,3 +62,10 @@ jobs:
         with:
             target_ref: ${{ needs.prepare.outputs.target_ref }}
         secrets: inherit
+
+    console_ci:
+        needs: prepare
+        uses: ./.github/workflows/si_console_ci.yml
+        with:
+            target_ref: ${{ needs.prepare.outputs.target_ref }}
+        secrets: inherit
