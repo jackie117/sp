@@ -28,7 +28,10 @@ permissions:
     contents: read
 
 concurrency:
-    group: ts-ci
+    # 并发组按被测目标分组（payload 的最小化来源标识 main / PR #N）：
+    # 不同 PR 与 main 之间互不取消；同目标再触发仍新取消旧。被 si_full_ci 以
+    # workflow_call 编排时键退化为每次不同的 SHA，串行/抢占由调用方的按目标组负责
+    group: "ts-ci-${{ github.event.client_payload.target_source || inputs.target_ref || github.run_id }}"
     cancel-in-progress: true
 
 jobs:
