@@ -95,22 +95,32 @@ jobs:
               with:
                   node-version: 24
 
+            - name: setup_pnpm
+              shell: bash
+              run: |
+                  # corepack 随 Node 发行；显式激活与目标仓 packageManager 钉版一致的
+                  # pnpm（项目内 pnpm 也会按 packageManager 再校验版本）
+                  corepack enable
+                  corepack prepare pnpm@12.9.1 --activate
+                  pnpm --version
+
             - name: install_dependencies
               shell: bash
               working-directory: target/source/system_engine
-              run: npm ci
+              # --frozen-lockfile：锁文件与 package.json 不一致时 fail-fast
+              run: pnpm install --frozen-lockfile
 
             - name: typecheck
               shell: bash
               working-directory: target/source/system_engine
-              run: npm run typecheck
+              run: pnpm run typecheck
 
             - name: build
               shell: bash
               working-directory: target/source/system_engine
-              run: npm run build
+              run: pnpm run build
 
             - name: ts_quality
               shell: bash
               working-directory: target/source/system_engine
-              run: npm test
+              run: pnpm test
